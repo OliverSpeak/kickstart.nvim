@@ -33,6 +33,15 @@ vim.lsp.config('vtsls', {
   filetypes = { 'typescript', 'javascript', 'javascriptreact', 'typescriptreact', 'vue' },
 })
 
+-- Formatters for `<leader>f`. Both prefer the project's own copy (vendor/bin/pint,
+-- node_modules/.bin/prettier), so they follow its pint.json and .prettierrc
+-- Extends the table directly as calling conform's setup() again would clear kickstart's format-on-save
+local formatters_by_ft = require('conform').formatters_by_ft
+formatters_by_ft.php = { 'pint' }
+for _, filetype in ipairs { 'vue', 'javascript', 'typescript', 'css', 'json' } do
+  formatters_by_ft[filetype] = { 'prettier' }
+end
+
 -- intelephense's rename and code actions need a licence (https://intelephense.com);
 -- swap for 'phpactor' for a free alternative
 vim.lsp.enable { 'intelephense', 'vtsls', 'vue_ls', 'tailwindcss' }
