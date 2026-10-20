@@ -38,7 +38,7 @@ vim.lsp.config('vtsls', {
 -- Extends the table directly as calling conform's setup() again would clear kickstart's format-on-save
 local formatters_by_ft = require('conform').formatters_by_ft
 formatters_by_ft.php = { 'pint' }
-for _, filetype in ipairs { 'vue', 'javascript', 'typescript', 'css', 'json' } do
+for _, filetype in ipairs { 'vue', 'javascript', 'typescript', 'javascriptreact', 'typescriptreact', 'css', 'json' } do
   formatters_by_ft[filetype] = { 'prettier' }
 end
 
