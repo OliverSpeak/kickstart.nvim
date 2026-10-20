@@ -360,6 +360,13 @@ do
       topdelete = { text = '‾' }, ---@diagnostic disable-line: missing-fields
       changedelete = { text = '~' }, ---@diagnostic disable-line: missing-fields
     },
+    -- Inline blame on the cursor line; toggle with <leader>tb
+    current_line_blame = true,
+    current_line_blame_opts = {
+      delay = 250,
+      virt_text_pos = 'right_align',
+      ignore_whitespace = true, -- reindents/Pint passes don't take over a line's blame
+    },
     -- gitsigns.nvim's recommended keymaps:
     on_attach = function(bufnr)
       -- Navigation
