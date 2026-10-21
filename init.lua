@@ -926,6 +926,11 @@ do
 
     snippets = { preset = 'luasnip' },
 
+    -- Only show the command line completion menu when pressing <Tab>
+    cmdline = {
+      completion = { menu = { auto_show = false } },
+    },
+
     -- Blink.cmp includes an optional, recommended rust fuzzy matcher,
     -- which automatically downloads a prebuilt binary when enabled.
     --
