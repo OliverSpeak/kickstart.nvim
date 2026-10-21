@@ -8,11 +8,8 @@ starter.setup {
     return branch ~= '' and ('%s  ·  %s'):format(project, branch) or project
   end,
   items = {
-    { name = 'Find file', action = 'Telescope find_files', section = 'Search' },
-    { name = 'Grep project', action = 'Telescope live_grep', section = 'Search' },
-    { name = 'Recent files', action = 'Telescope oldfiles', section = 'Search' },
+    starter.sections.sessions(5, true), -- most recently used sessions
     starter.sections.recent_files(5, true), -- recent files in this directory only
-    starter.sections.builtin_actions(),     -- new buffer, quit
   },
   footer = os.date '%A %d %B',
   content_hooks = {
