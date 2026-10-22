@@ -11,7 +11,8 @@ starter.setup {
     starter.sections.sessions(5, true), -- most recently used sessions
     starter.sections.recent_files(5, true), -- recent files in this directory only
   },
-  footer = os.date '%A %d %B',
+  -- Empty rather than unset, which would show mini.starter's usage help
+  footer = '',
   content_hooks = {
     starter.gen_hook.adding_bullet(),
     starter.gen_hook.aligning('center', 'center'),
