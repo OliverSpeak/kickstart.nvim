@@ -30,6 +30,18 @@ local function diff_backgrounds()
     local cursor_hunk = vim.api.nvim_get_hl(0, { name = 'NeogitDiff' .. kind .. 'Highlight', link = false })
     vim.api.nvim_set_hl(0, 'NeogitDiff' .. kind, { fg = base.fg, bg = cursor_hunk.bg })
   end
+  -- Changed words within a line: neogit's defaults are solid yellow/pink blocks that hide
+  -- syntax colours. Instead, move the theme's line background 20% towards its add/remove
+  -- colour (how delta's emph colours are made), with no fg so syntax colours show through
+  local function mix(a, b, amount)
+    local channel = function(shift) return math.floor(bit.band(bit.rshift(a, shift), 255) * (1 - amount) + bit.band(bit.rshift(b, shift), 255) * amount + 0.5) end
+    return bit.bor(bit.lshift(channel(16), 16), bit.lshift(channel(8), 8), channel(0))
+  end
+  for kind, theme in pairs { Add = { 'DiffAdd', 'Added' }, Delete = { 'DiffDelete', 'Removed' } } do
+    local line = vim.api.nvim_get_hl(0, { name = theme[1], link = false }).bg
+    local accent = vim.api.nvim_get_hl(0, { name = theme[2], link = false }).fg
+    if line and accent then vim.api.nvim_set_hl(0, 'NeogitDiff' .. kind .. 'Inline', { bg = mix(line, accent, 0.2) }) end
+  end
 end
 diff_backgrounds()
 vim.api.nvim_create_autocmd('ColorScheme', { callback = diff_backgrounds })
