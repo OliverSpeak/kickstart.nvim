@@ -19,7 +19,20 @@ vim.pack.add {
 
 require('neogit').setup {
   diff_viewer = 'codediff', -- open diffs from neogit in codediff rather than diffview
+  treesitter_diff_highlight = true, -- syntax highlight code in the status buffer's inline diffs
 }
+
+-- sonokai links NeogitDiffAdd/Delete to plain Green/Red, so added and removed lines
+-- only get a background in the hunk under the cursor. Give them that background everywhere
+local function diff_backgrounds()
+  for _, kind in ipairs { 'Add', 'Delete' } do
+    local base = vim.api.nvim_get_hl(0, { name = 'NeogitDiff' .. kind, link = false })
+    local cursor_hunk = vim.api.nvim_get_hl(0, { name = 'NeogitDiff' .. kind .. 'Highlight', link = false })
+    vim.api.nvim_set_hl(0, 'NeogitDiff' .. kind, { fg = base.fg, bg = cursor_hunk.bg })
+  end
+end
+diff_backgrounds()
+vim.api.nvim_create_autocmd('ColorScheme', { callback = diff_backgrounds })
 
 vim.keymap.set('n', '<leader>gg', '<cmd>Neogit<CR>', { desc = '[G]it status (Neo[g]it)' })
 vim.keymap.set('n', '<leader>gc', '<cmd>Neogit commit<CR>', { desc = '[G]it [c]ommit' })
