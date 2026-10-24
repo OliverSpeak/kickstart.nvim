@@ -54,6 +54,10 @@
       "rev": "7f867b4980946f115f4ccb922637d70d89a59cb4",
       "src": "https://github.com/mawkler/modicator.nvim"
     },
+    "neogit": {
+      "rev": "832a2db084ac25c2801fd73a3fab58f3c82ed2ec",
+      "src": "https://github.com/NeogitOrg/neogit"
+    },
     "nvim-lspconfig": {
       "rev": "45a3a444b710511c39abca3b60bb6e23a21e3de5",
       "src": "https://github.com/neovim/nvim-lspconfig"
