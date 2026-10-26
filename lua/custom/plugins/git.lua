@@ -2,7 +2,15 @@
 -- Press `q` in a CodeDiff tab to close it, `g?` for its keymaps
 vim.pack.add { 'https://github.com/esmuellert/codediff.nvim' }
 
-require('codediff').setup {}
+require('codediff').setup {
+  diff = {
+    filler_text = '', -- blank alignment rows instead of ╱╱╱ hatching
+    highlight_added_deleted_files = true, -- tint whole new or deleted files green or red
+  },
+  explorer = {
+    line_stats = { enabled = true }, -- +added -removed line counts beside each file
+  },
+}
 
 -- Side by side needs about 80 columns a side plus the 40-column file list, which nvim
 -- doesn't get beside Claude in cook's tmux split. When narrower, open diffs inline (one
