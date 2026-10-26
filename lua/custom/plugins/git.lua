@@ -4,6 +4,16 @@ vim.pack.add { 'https://github.com/esmuellert/codediff.nvim' }
 
 require('codediff').setup {}
 
+-- Side by side needs about 80 columns a side plus the 40-column file list, which nvim
+-- doesn't get beside Claude in cook's tmux split. When narrower, open diffs inline (one
+-- pane, like GitHub's unified view). Checked on resize, so zooming the tmux pane
+-- (prefix z) before opening a diff gets side by side. `t` in a diff toggles it
+local function codediff_layout()
+  require('codediff.config').options.diff.layout = vim.o.columns >= 200 and 'side-by-side' or 'inline'
+end
+codediff_layout()
+vim.api.nvim_create_autocmd('VimResized', { callback = codediff_layout })
+
 vim.keymap.set('n', '<leader>gd', '<cmd>CodeDiff<CR>', { desc = '[G]it [d]iff working tree' })
 vim.keymap.set('n', '<leader>gm', '<cmd>CodeDiff origin/HEAD...<CR>', { desc = '[G]it diff branch against [m]ain' })
 vim.keymap.set('n', '<leader>gh', '<cmd>CodeDiff history %<CR>', { desc = '[G]it [h]istory of current file' })
