@@ -2,6 +2,35 @@
 -- Move with j/k, press <CR> or an item's key to open it
 vim.pack.add { 'https://github.com/goolord/alpha-nvim' }
 
+-- Items are 50 columns, or less in a narrow window. alpha pads each item's text to
+-- this width with its key on the right; anything longer pushes the key out and the
+-- row out of line, so text is shortened to fit first (see fit_path/fit_text)
+local function row_width() return math.max(20, math.min(50, vim.api.nvim_win_get_width(0) - 4)) end
+
+-- Room for an item's text: the row less its one-character key and a two-space gap
+local function text_width() return row_width() - 3 end
+
+-- Cut from the end with an ellipsis
+local function fit_text(text, max)
+  if vim.fn.strchars(text) <= max then return text end
+  return vim.fn.strcharpart(text, 0, max - 1) .. '…'
+end
+
+-- Shorten folders to their first letter (keeping a leading dot), leftmost first and
+-- only as far as needed, so the file name stays whole: r/j/components/ui/button.tsx.
+-- If even that is too long, keep the end of the path after an ellipsis
+local function fit_path(path, max)
+  if vim.fn.strchars(path) <= max then return path end
+  local parts = vim.split(path, '/', { plain = true })
+  for i = 1, #parts - 1 do
+    parts[i] = parts[i]:match '^%.?[^.]?' or parts[i]
+    local shortened = table.concat(parts, '/')
+    if vim.fn.strchars(shortened) <= max then return shortened end
+  end
+  local shortened = table.concat(parts, '/')
+  return '…' .. vim.fn.strcharpart(shortened, vim.fn.strchars(shortened) - (max - 1))
+end
+
 local function item(key, text, action)
   return {
     type = 'button',
@@ -12,22 +41,28 @@ local function item(key, text, action)
       shortcut = key,
       align_shortcut = 'right',
       hl_shortcut = 'Keyword',
-      width = 50,
+      width = row_width(),
       cursor = 0,
       keymap = { 'n', key, action, { nowait = true, silent = true } },
     },
   }
 end
 
--- Padded to the item width so it lines up with the left edge of the items below
-local function heading(text) return { type = 'text', val = ('%-50s'):format(text), opts = { position = 'center', hl = 'Red' } } end
+-- Padded to the item width so it lines up with the left edge of the items below. A
+-- function, so the width follows the window when alpha redraws
+local function heading(text)
+  return {
+    type = 'group',
+    val = function() return { { type = 'text', val = ('%-' .. row_width() .. 's'):format(text), opts = { position = 'center', hl = 'Red' } } } end,
+  }
+end
 
 local function sessions()
   local detected = vim.tbl_values(require('mini.sessions').detected)
   table.sort(detected, function(a, b) return a.modify_time > b.modify_time end)
   local items = {}
   for i, session in ipairs(vim.list_slice(detected, 1, 5)) do
-    items[i] = item(tostring(i), session.name, function() require('mini.sessions').read(session.name) end)
+    items[i] = item(tostring(i), fit_text(session.name, text_width()), function() require('mini.sessions').read(session.name) end)
   end
   return items
 end
@@ -40,7 +75,7 @@ local function recent_files()
     if #items == 5 then break end
     if vim.startswith(path, cwd) and vim.fn.filereadable(path) == 1 then
       local key = string.char(('a'):byte() + #items)
-      table.insert(items, item(key, vim.fn.fnamemodify(path, ':.'), function() vim.cmd.edit(vim.fn.fnameescape(path)) end))
+      table.insert(items, item(key, fit_path(vim.fn.fnamemodify(path, ':.'), text_width()), function() vim.cmd.edit(vim.fn.fnameescape(path)) end))
     end
   end
   return items
