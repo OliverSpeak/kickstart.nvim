@@ -54,6 +54,12 @@ local function diff_backgrounds()
     local cursor_hunk = vim.api.nvim_get_hl(0, { name = 'NeogitDiff' .. kind .. 'Highlight', link = false })
     vim.api.nvim_set_hl(0, 'NeogitDiff' .. kind, { fg = base.fg, bg = cursor_hunk.bg })
   end
+  -- Unchanged lines get a grey block that doesn't match the transparent background. Drop
+  -- it, keeping the grey cursor line (NeogitDiffContextCursor) so you can see where you are
+  for _, name in ipairs { 'NeogitDiffContext', 'NeogitDiffContextHighlight' } do
+    local context = vim.api.nvim_get_hl(0, { name = name, link = false })
+    vim.api.nvim_set_hl(0, name, { fg = context.fg })
+  end
   -- Changed words within a line: neogit's defaults are solid yellow/pink blocks that hide
   -- syntax colours. Instead, move the theme's line background 10% (0x19) towards its
   -- add/remove colour, as Monokai Pro's VS Code theme layers changed text over changed
