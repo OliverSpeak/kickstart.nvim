@@ -3,6 +3,12 @@
 vim.pack.add { 'https://github.com/esmuellert/codediff.nvim' }
 
 require('codediff').setup {
+  highlights = {
+    -- Changed words match Neogit's, set by diff_backgrounds() below. codediff resolves
+    -- these when its plugin file loads and on ColorScheme, both after that has run
+    char_insert = 'NeogitDiffAddInline',
+    char_delete = 'NeogitDiffDeleteInline',
+  },
   diff = {
     filler_text = '', -- blank alignment rows instead of ╱╱╱ hatching
     highlight_added_deleted_files = true, -- tint whole new or deleted files green or red
@@ -49,8 +55,10 @@ local function diff_backgrounds()
     vim.api.nvim_set_hl(0, 'NeogitDiff' .. kind, { fg = base.fg, bg = cursor_hunk.bg })
   end
   -- Changed words within a line: neogit's defaults are solid yellow/pink blocks that hide
-  -- syntax colours. Instead, move the theme's line background 20% towards its add/remove
-  -- colour (how delta's emph colours are made), with no fg so syntax colours show through
+  -- syntax colours. Instead, move the theme's line background 10% (0x19) towards its
+  -- add/remove colour, as Monokai Pro's VS Code theme layers changed text over changed
+  -- lines, with no fg so syntax colours show through. codediff uses these too (its
+  -- char_insert/char_delete above)
   local function mix(a, b, amount)
     local channel = function(shift) return math.floor(bit.band(bit.rshift(a, shift), 255) * (1 - amount) + bit.band(bit.rshift(b, shift), 255) * amount + 0.5) end
     return bit.bor(bit.lshift(channel(16), 16), bit.lshift(channel(8), 8), channel(0))
@@ -58,7 +66,7 @@ local function diff_backgrounds()
   for kind, theme in pairs { Add = { 'DiffAdd', 'Added' }, Delete = { 'DiffDelete', 'Removed' } } do
     local line = vim.api.nvim_get_hl(0, { name = theme[1], link = false }).bg
     local accent = vim.api.nvim_get_hl(0, { name = theme[2], link = false }).fg
-    if line and accent then vim.api.nvim_set_hl(0, 'NeogitDiff' .. kind .. 'Inline', { bg = mix(line, accent, 0.2) }) end
+    if line and accent then vim.api.nvim_set_hl(0, 'NeogitDiff' .. kind .. 'Inline', { bg = mix(line, accent, 0x19 / 255) }) end
   end
 end
 diff_backgrounds()
