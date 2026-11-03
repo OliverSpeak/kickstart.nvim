@@ -1,8 +1,8 @@
--- Language servers for Laravel / PHP / TypeScript / Vue / Tailwind
+-- Language servers for Laravel / PHP / TypeScript / Vue / Svelte / Tailwind
 -- See `:help lspconfig-all` for each server's options
 
 -- Install the servers with Mason if they're missing
-local mason_packages = { 'intelephense', 'vtsls', 'vue-language-server', 'tailwindcss-language-server' }
+local mason_packages = { 'intelephense', 'vtsls', 'vue-language-server', 'svelte-language-server', 'tailwindcss-language-server' }
 local registry = require 'mason-registry'
 registry.refresh(function()
   for _, name in ipairs(mason_packages) do
@@ -38,10 +38,14 @@ vim.lsp.config('vtsls', {
 -- Extends the table directly as calling conform's setup() again would clear kickstart's format-on-save
 local formatters_by_ft = require('conform').formatters_by_ft
 formatters_by_ft.php = { 'pint' }
-for _, filetype in ipairs { 'vue', 'javascript', 'typescript', 'javascriptreact', 'typescriptreact', 'css', 'json' } do
+for _, filetype in ipairs { 'vue', 'svelte', 'javascript', 'typescript', 'javascriptreact', 'typescriptreact', 'css', 'json' } do
   formatters_by_ft[filetype] = { 'prettier' }
 end
 
 -- intelephense's rename and code actions need a licence (https://intelephense.com);
 -- swap for 'phpactor' for a free alternative
-vim.lsp.enable { 'intelephense', 'vtsls', 'vue_ls', 'tailwindcss' }
+vim.lsp.enable { 'intelephense', 'vtsls', 'vue_ls', 'svelte', 'tailwindcss' }
+
+-- Treesitter only auto-installs a file's own parser, not the languages embedded in it,
+-- so install CSS up front for Vue and Svelte <style> blocks
+require('nvim-treesitter').install { 'svelte', 'css' }
