@@ -9,6 +9,13 @@ require('oil').setup {
   view_options = {
     show_hidden = true, -- dotfiles like .env, matching telescope's find_files. `g.` toggles
   },
+  -- Leave <C-h>/<C-l> to move between windows, as everywhere else (init.lua). Horizontal
+  -- split moves to <C-x>, Telescope's key for it; refresh is dropped as oil re-reads after `:w`
+  keymaps = {
+    ['<C-h>'] = false,
+    ['<C-l>'] = false,
+    ['<C-x>'] = { 'actions.select', opts = { horizontal = true } },
+  },
 }
 
 vim.keymap.set('n', '-', '<cmd>Oil<CR>', { desc = 'Open parent directory' })
