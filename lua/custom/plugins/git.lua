@@ -113,6 +113,39 @@ require('neogit').setup {
   treesitter_diff_highlight = true, -- syntax highlight code in the status buffer's inline diffs
 }
 
+-- Syntax and word highlighting in neogit's diffs has no size limit and reruns on every
+-- render, so big generated files (lockfiles, built assets) take seconds to expand: about
+-- 70ms of highlighting per 1000 diff lines. Minified files are worse: the word diff on one
+-- changed 400KB line takes 16s. Skip it for files with over 2000 lines of diff or any line
+-- over 10000 characters, which keep plain red/green. Hand-written files stay under these
+-- (the longest lines found are Blade emails and SVG components, under 6000), while
+-- minified bundles mostly run to 20000+. Neogit has no option for this, so this wraps its
+-- internal highlighter and does nothing if a neogit update moves it. Regions come one per
+-- hunk, so they're totalled per file
+local max_highlighted_diff_lines = 2000
+local max_highlighted_line_length = 10000
+local ok, diff_highlights = pcall(require, 'neogit.lib.diff_highlights')
+if ok and type(diff_highlights.apply) == 'function' then
+  local apply = diff_highlights.apply
+  diff_highlights.apply = function(buf, regions)
+    local lines_per_file, too_big = {}, {}
+    for _, region in ipairs(regions) do
+      local file = region.filepath
+      lines_per_file[file] = (lines_per_file[file] or 0) + region.last_line - region.first_line
+      if lines_per_file[file] > max_highlighted_diff_lines then too_big[file] = true end
+      if not too_big[file] then
+        for _, line in ipairs(buf:get_lines(region.first_line, region.last_line, false)) do
+          if #line > max_highlighted_line_length then
+            too_big[file] = true
+            break
+          end
+        end
+      end
+    end
+    return apply(buf, vim.tbl_filter(function(region) return not too_big[region.filepath] end, regions))
+  end
+end
+
 -- sonokai links NeogitDiffAdd/Delete to plain Green/Red, so added and removed lines
 -- only get a background in the hunk under the cursor. Give them that background everywhere
 local function diff_backgrounds()
