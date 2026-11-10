@@ -39,8 +39,13 @@ vim.api.nvim_create_autocmd({ 'RecordingEnter', 'RecordingLeave' }, {
 -- the bottom row while typing a command. ui2 (experimental, built in) shows
 -- messages in a corner window and long output in a pager instead of hit-enter
 -- prompts. See `:help ui2` and `:help 'cmdheight'`
-vim.o.cmdheight = 0
-require('vim._core.ui2').enable { msg = { targets = 'msg' } }
+-- ui2 is a private module that a Neovim update may move, so only hide the command line
+-- when it loads; without it, messages would have nowhere to show
+local ok, ui2 = pcall(require, 'vim._core.ui2')
+if ok then
+  vim.o.cmdheight = 0
+  ui2.enable { msg = { targets = 'msg' } }
+end
 
 -- Color the cursor line number by mode, matching lualine's mode colors
 -- Needs 'number' and 'cursorline', both set in init.lua. See `:help modicator`
