@@ -2,7 +2,7 @@
 -- See `:help lspconfig-all` for each server's options
 
 -- Install the servers with Mason if they're missing
-local mason_packages = { 'intelephense', 'vtsls', 'vue-language-server', 'svelte-language-server', 'tailwindcss-language-server' }
+local mason_packages = { 'intelephense', 'vtsls', 'vue-language-server', 'svelte-language-server', 'tailwindcss-language-server', 'eslint-lsp' }
 local registry = require 'mason-registry'
 registry.refresh(function()
   for _, name in ipairs(mason_packages) do
@@ -45,6 +45,16 @@ end
 -- intelephense's rename and code actions need a licence (https://intelephense.com);
 -- swap for 'phpactor' for a free alternative
 vim.lsp.enable { 'intelephense', 'vtsls', 'vue_ls', 'svelte', 'tailwindcss' }
+
+-- Linters. Each only starts in projects set up for it: eslint needs an ESLint config
+-- file, oxlint an .oxlintrc.json / oxlint.config.ts or `oxlint` in package.json. A
+-- project with both gets both. oxlint runs the project's own node_modules/.bin/oxlint,
+-- so only eslint's server comes from Mason. `:LspEslintFixAll` / `:LspOxlintFixAll`
+-- apply all automatic fixes
+vim.lsp.enable { 'eslint', 'oxlint' }
+
+-- Without this, lspconfig's oxlint tries to start (and errors) in every JS/TS project
+vim.lsp.config('oxlint', { workspace_required = true })
 
 -- Treesitter only auto-installs a file's own parser, not the languages embedded in it,
 -- so install CSS up front for Vue and Svelte <style> blocks
