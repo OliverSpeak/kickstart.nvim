@@ -5,6 +5,7 @@
 local default_width = 80 -- prettier's default printWidth, for JS / TS / Vue / Svelte / CSS
 local widths = {
   php = 120, -- PSR-12, which pint follows
+  blade = 120, -- blade-formatter's default wrap
   lua = 160, -- column_width in .stylua.toml
   gitcommit = 72, -- git's convention for commit message bodies
 }

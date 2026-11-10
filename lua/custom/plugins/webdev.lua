@@ -1,8 +1,17 @@
 -- Language servers for Laravel / PHP / TypeScript / Vue / Svelte / Tailwind
 -- See `:help lspconfig-all` for each server's options
 
--- Install the servers with Mason if they're missing
-local mason_packages = { 'intelephense', 'vtsls', 'vue-language-server', 'svelte-language-server', 'tailwindcss-language-server', 'eslint-lsp' }
+-- Install the servers and formatters with Mason if they're missing
+local mason_packages = {
+  'intelephense',
+  'vtsls',
+  'vue-language-server',
+  'svelte-language-server',
+  'tailwindcss-language-server',
+  'eslint-lsp',
+  'prettier', -- fallback for files outside a project that has its own
+  'blade-formatter',
+}
 local registry = require 'mason-registry'
 registry.refresh(function()
   for _, name in ipairs(mason_packages) do
@@ -33,11 +42,15 @@ vim.lsp.config('vtsls', {
   filetypes = { 'typescript', 'javascript', 'javascriptreact', 'typescriptreact', 'vue' },
 })
 
--- Formatters for `<leader>f`. Both prefer the project's own copy (vendor/bin/pint,
--- node_modules/.bin/prettier), so they follow its pint.json and .prettierrc
+-- Formatters for `<leader>f`. pint and prettier prefer the project's own copy
+-- (vendor/bin/pint, node_modules/.bin/prettier), so they follow its pint.json and
+-- .prettierrc; prettier falls back to Mason's copy elsewhere. Blade templates
+-- (*.blade.php) are their own filetype, so pint never sees them; blade-formatter reads
+-- a project's .bladeformatterrc
 -- Extends the table directly as calling conform's setup() again would clear kickstart's format-on-save
 local formatters_by_ft = require('conform').formatters_by_ft
 formatters_by_ft.php = { 'pint' }
+formatters_by_ft.blade = { 'blade-formatter' }
 for _, filetype in ipairs { 'vue', 'svelte', 'javascript', 'typescript', 'javascriptreact', 'typescriptreact', 'css', 'json' } do
   formatters_by_ft[filetype] = { 'prettier' }
 end
