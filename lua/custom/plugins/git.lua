@@ -22,9 +22,7 @@ require('codediff').setup {
 -- doesn't get beside Claude in cook's tmux split. When narrower, open diffs inline (one
 -- pane, like GitHub's unified view). Checked on resize, so zooming the tmux pane
 -- (prefix z) before opening a diff gets side by side. `t` in a diff toggles it
-local function codediff_layout()
-  require('codediff.config').options.diff.layout = vim.o.columns >= 200 and 'side-by-side' or 'inline'
-end
+local function codediff_layout() require('codediff.config').options.diff.layout = vim.o.columns >= 200 and 'side-by-side' or 'inline' end
 codediff_layout()
 vim.api.nvim_create_autocmd('VimResized', { callback = codediff_layout })
 
