@@ -144,6 +144,65 @@ if ok and type(diff_highlights.apply) == 'function' then
   end
 end
 
+-- Deleting a branch warns "contains unmerged commits!" without saying merged into what.
+-- It checks against the `neogit.baseBranch` git config (else master/main), not the current
+-- branch, so a branch merged into development still warns while compared with main. Name
+-- the base branch in the warning. This is a copy of neogit's branch.delete with only the
+-- message changed. Neogit has no option for it, so this does nothing if an update moves it
+local ok_branch, neogit_branch = pcall(require, 'neogit.lib.git.branch')
+if
+  ok_branch
+  and type(neogit_branch.delete) == 'function'
+  and type(neogit_branch.is_unmerged) == 'function'
+  and type(neogit_branch.base_branch) == 'function'
+then
+  neogit_branch.delete = function(name)
+    local git = require 'neogit.lib.git'
+    local input = require 'neogit.lib.input'
+    local base = neogit_branch.base_branch()
+    local result
+    if neogit_branch.is_unmerged(name, base) then
+      local message = ("'%s' has commits that aren't in '%s'! Are you sure you want to delete it?"):format(name, base or '?')
+      if input.get_permission(message) then result = git.cli.branch.delete.force.name(name).call { await = true } end
+    else
+      result = git.cli.branch.delete.name(name).call { await = true }
+    end
+    return result and result:success() or false
+  end
+end
+
+-- Neogit's telescope pickers (checkout, delete, merge...) list branches as plain text, so
+-- origin/foo looks the same as a local branch. Colour the remote prefix (`origin/`) like
+-- the status buffer does (NeogitRemote). The picker takes its options before neogit's own,
+-- so a `finder` set here replaces the plain one. find_async wraps find when it's loaded, so
+-- it's rewrapped too. Does nothing if a neogit update moves these
+local ok_finder, neogit_finder = pcall(require, 'neogit.lib.finder')
+local ok_async, neogit_async = pcall(require, 'neogit.lib.async')
+if ok_finder and ok_async and type(neogit_finder.find) == 'function' and type(neogit_async.wrap) == 'function' then
+  local find = neogit_finder.find
+  neogit_finder.find = function(self, on_select)
+    if self.opts.finder == nil and require('neogit.config').check_integration 'telescope' then
+      local ok_remotes, remotes = pcall(function() return require('neogit.lib.git').remote.list() end)
+      local is_remote = {}
+      for _, remote in ipairs(ok_remotes and remotes or { 'origin' }) do
+        is_remote[remote] = true
+      end
+      local string_entry = require('telescope.make_entry').gen_from_string {}
+      self.opts.finder = require('telescope.finders').new_table {
+        results = self.entries,
+        entry_maker = function(line)
+          local entry = string_entry(line)
+          local remote = type(line) == 'string' and line:match '^([^/]+)/.'
+          if remote and is_remote[remote] then entry.display = function() return line, { { { 0, #remote + 1 }, 'NeogitRemote' } } end end
+          return entry
+        end,
+      }
+    end
+    return find(self, on_select)
+  end
+  neogit_finder.find_async = neogit_async.wrap(neogit_finder.find, 2)
+end
+
 -- sonokai links NeogitDiffAdd/Delete to plain Green/Red, so added and removed lines
 -- only get a background in the hunk under the cursor. Give them that background everywhere
 local function diff_backgrounds()
