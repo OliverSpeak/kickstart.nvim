@@ -12,6 +12,11 @@ require('codediff').setup {
   diff = {
     filler_text = '', -- blank alignment rows instead of ╱╱╱ hatching
     highlight_added_deleted_files = true, -- tint whole new or deleted files green or red
+    -- Hide unchanged code, showing only the changes with 3 lines of context, like
+    -- GitHub's diff view, so there's less to scroll through. `gc` shows the whole file
+    compact = true,
+    -- ]c/[c carry on into the next or previous file, so one key steps through every change
+    cycle_hunks_across_files = true,
   },
   explorer = {
     line_stats = { enabled = true }, -- +added -removed line counts beside each file
