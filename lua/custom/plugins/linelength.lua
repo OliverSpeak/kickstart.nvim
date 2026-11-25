@@ -9,7 +9,7 @@ local widths = {
   lua = 160, -- column_width in .stylua.toml
   gitcommit = 72, -- git's convention for commit message bodies
 }
-local skip_filetypes = { text = true, markdown = true } -- prose, where long lines are normal
+local skip_filetypes = { text = true, markdown = true, csv = true, tsv = true } -- prose and data, where long lines are normal
 
 local function width(buf)
   local editorconfig = vim.b[buf].editorconfig

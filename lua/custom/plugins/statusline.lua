@@ -22,6 +22,8 @@ require('lualine').setup {
         -- The theme's red, from the palette set in colorscheme.lua
         color = { fg = vim.g.sonokai_colors_override.red[1], gui = 'bold' },
       },
+      -- In CSV files, the column the cursor is in and its header (lua/custom/plugins/csv.lua)
+      require('custom.plugins.csv').column,
       'encoding',
       'fileformat',
       'filetype',
