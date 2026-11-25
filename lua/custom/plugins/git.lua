@@ -114,7 +114,53 @@ vim.pack.add {
 require('neogit').setup {
   diff_viewer = 'codediff', -- open diffs from neogit in codediff rather than diffview
   treesitter_diff_highlight = true, -- syntax highlight code in the status buffer's inline diffs
+  -- Neogit remembers popup switches per project, which suits display preferences (graph,
+  -- no-merges, autostash) but not switches that are easy to forget are on and quietly
+  -- change what happens. Those last only for the popup they're set in. Neogit already
+  -- never remembers force push/pull, pull --rebase or empty commits
+  ignored_settings = {
+    -- Log filters, which hide commits. "Follow renames" (-f) only works with a log of one
+    -- file: left on, every other log is empty, as git refuses (--follow requires exactly
+    -- one pathspec)
+    'NeogitLogPopup--follow',
+    'NeogitLogPopup--author',
+    'NeogitLogPopup--grep',
+    'NeogitLogPopup--invert-grep',
+    'NeogitLogPopup--G',
+    'NeogitLogPopup--S',
+    'NeogitLogPopup--L',
+    'NeogitLogPopup--since',
+    'NeogitLogPopup--until',
+    'NeogitLogPopup--', -- limit to files
+    -- Commit switches that change every later commit: another author, skipped hooks,
+    -- committing everything modified rather than what's staged
+    'NeogitCommitPopup--author',
+    'NeogitCommitPopup--no-verify',
+    'NeogitCommitPopup--all',
+    'NeogitCommitPopup--reuse-message',
+    'NeogitCommitPopup--reset-author',
+    -- A dry run push does nothing; no-verify skips hooks
+    'NeogitPushPopup--dry-run',
+    'NeogitPushPopup--no-verify',
+    'NeogitRebasePopup--no-verify',
+  },
 }
+
+-- ignored_settings stops these being saved, but a value saved before (or by an nvim
+-- still running the old config) would still load, and could then never be turned off
+-- from the popup, since changes to it aren't saved either. So drop any from this
+-- project's saved state as it loads. Does nothing if a neogit update moves its state
+local ok_state, neogit_state = pcall(require, 'neogit.lib.state')
+if ok_state and type(neogit_state.state) == 'table' and type(neogit_state.write) == 'function' then
+  local dropped = false
+  for _, key in ipairs(require('neogit.config').values.ignored_settings) do
+    if neogit_state.state[key] ~= nil then
+      neogit_state.state[key] = nil
+      dropped = true
+    end
+  end
+  if dropped then neogit_state.write() end
+end
 
 -- Syntax and word highlighting in neogit's diffs has no size limit and reruns on every
 -- render, so big generated files (lockfiles, built assets) take seconds to expand: about
@@ -239,6 +285,19 @@ local function diff_backgrounds()
 end
 diff_backgrounds()
 vim.api.nvim_create_autocmd('ColorScheme', { callback = diff_backgrounds })
+
+-- Switches and options that are on in neogit's popups are purple by default, which barely
+-- stands out from the grey of those that are off. Make them the theme's blue (cyan), in
+-- bold, which nothing else in the popups uses (headings are green, remotes yellow) and
+-- which means active elsewhere too, as tmux's focused pane border. Neogit sets its
+-- colours as defaults, so these win, and are reapplied with the theme
+local function popup_colours()
+  for _, kind in ipairs { 'Switch', 'Option', 'Config' } do
+    vim.api.nvim_set_hl(0, 'NeogitPopup' .. kind .. 'Enabled', { fg = vim.g.sonokai_colors_override.blue[1], bold = true })
+  end
+end
+popup_colours()
+vim.api.nvim_create_autocmd('ColorScheme', { callback = popup_colours })
 
 vim.keymap.set('n', '<leader>gg', '<cmd>Neogit<CR>', { desc = '[G]it status (Neo[g]it)' })
 vim.keymap.set('n', '<leader>gc', '<cmd>Neogit commit<CR>', { desc = '[G]it [c]ommit' })
