@@ -115,7 +115,7 @@ require('neogit').setup {
   diff_viewer = 'codediff', -- open diffs from neogit in codediff rather than diffview
   treesitter_diff_highlight = true, -- syntax highlight code in the status buffer's inline diffs
   -- Neogit remembers popup switches per project, which suits display preferences (graph,
-  -- no-merges, autostash) but not switches that are easy to forget are on and quietly
+  -- autostash) but not switches that are easy to forget are on and quietly
   -- change what happens. Those last only for the popup they're set in. Neogit already
   -- never remembers force push/pull, pull --rebase or empty commits
   ignored_settings = {
@@ -132,6 +132,7 @@ require('neogit').setup {
     'NeogitLogPopup--since',
     'NeogitLogPopup--until',
     'NeogitLogPopup--', -- limit to files
+    'NeogitLogPopup--no-merges', -- the log doesn't say merges are hidden, so searches miss them
     -- Commit switches that change every later commit: another author, skipped hooks,
     -- committing everything modified rather than what's staged
     'NeogitCommitPopup--author',
