@@ -10,11 +10,17 @@ require('oil').setup {
     show_hidden = true, -- dotfiles like .env, matching telescope's find_files. `g.` toggles
   },
   -- Leave <C-h>/<C-l> to move between windows, as everywhere else (init.lua). Horizontal
-  -- split moves to <C-x>, Telescope's key for it; refresh is dropped as oil re-reads after `:w`
+  -- split moves to <C-x>, Telescope's key for it; refresh is dropped as oil re-reads after `:w`.
+  -- `gx` (oil's default) opens the entry under the cursor in its default app, so a folder
+  -- opens in the file manager; `gX` does the same for the folder being browsed
   keymaps = {
     ['<C-h>'] = false,
     ['<C-l>'] = false,
     ['<C-x>'] = { 'actions.select', opts = { horizontal = true } },
+    ['gX'] = {
+      function() vim.ui.open(require('oil').get_current_dir()) end,
+      desc = 'Open the current directory in the file manager',
+    },
   },
 }
 
