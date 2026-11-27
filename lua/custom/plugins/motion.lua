@@ -11,6 +11,19 @@ vim.pack.add { 'https://github.com/folke/flash.nvim' }
 local flash = require 'flash'
 flash.setup {}
 
+-- Only the labels get a coloured block, so the eye goes straight to them. By default
+-- the matched text sits on a bright green block (Search) right beside the yellow
+-- label, and the two compete. Matches are bold white text instead, which still
+-- stands out because flash greys the rest of the screen. Set again on ColorScheme,
+-- since loading a colorscheme clears these
+local function flash_highlights()
+  vim.api.nvim_set_hl(0, 'FlashMatch', { fg = '#f7f1ff', bold = true })
+  vim.api.nvim_set_hl(0, 'FlashCurrent', { link = 'FlashMatch' })
+  vim.api.nvim_set_hl(0, 'FlashLabel', { fg = '#2d2a2e', bg = '#fce566', bold = true })
+end
+flash_highlights()
+vim.api.nvim_create_autocmd('ColorScheme', { callback = flash_highlights })
+
 vim.keymap.set({ 'n', 'x', 'o' }, 's', flash.jump, { desc = 'Flash jump' })
 -- Labels the treesitter nodes around the cursor (expression, argument, block,
 -- function, ...) at both ends, e.g. `v S <label>` selects a whole function
