@@ -35,6 +35,42 @@ local function codediff_layout() require('codediff.config').options.diff.layout 
 codediff_layout()
 vim.api.nvim_create_autocmd('VimResized', { callback = codediff_layout })
 
+-- Scroll side-by-side panes sideways together (zl/zL/zh/zH, or the cursor running off the
+-- edge), since codediff turns wrapping off for long lines. Panes are scroll-bound, but nvim
+-- only syncs sideways when 'scrollopt' has "hor", which codediff doesn't add (:diffthis
+-- does). 'scrollopt' is global, and "hor" everywhere would also scroll gitsigns' blame
+-- panel off its hashes, so it's on only while a codediff tab is the current tab
+--
+-- Review later: this should be codediff's job, and was. Its issue #359 (sideways scroll not
+-- synced) was closed as fixed in Sept 2026 by a custom scroll engine (#471, #549), but
+-- #557 (10 Sept) dropped that engine for native scrollbind without adding "hor", so it
+-- broke again; v4.0.8 still has it broken while #359 still reads as fixed. Once codediff
+-- adds "hor" itself (check: one pane's `20zl` moves both with this block removed), delete
+-- this. Until then it's harmless alongside a fix, as both set the same value
+local codediff_tabs = {} -- tabpage -> true while a codediff session is open in it
+local function codediff_scrollopt()
+  if codediff_tabs[vim.api.nvim_get_current_tabpage()] then
+    vim.opt.scrollopt:append 'hor'
+  else
+    vim.opt.scrollopt:remove 'hor'
+  end
+end
+vim.api.nvim_create_autocmd('User', {
+  pattern = 'CodeDiffOpen',
+  callback = function(args)
+    codediff_tabs[args.data.tabpage] = true
+    codediff_scrollopt()
+  end,
+})
+vim.api.nvim_create_autocmd('User', {
+  pattern = 'CodeDiffClose',
+  callback = function(args)
+    codediff_tabs[args.data.tabpage] = nil
+    vim.schedule(codediff_scrollopt) -- once the tab has closed and another is current
+  end,
+})
+vim.api.nvim_create_autocmd('TabEnter', { callback = codediff_scrollopt })
+
 vim.keymap.set('n', '<leader>gd', '<cmd>CodeDiff<CR>', { desc = '[G]it [d]iff working tree' })
 vim.keymap.set('n', '<leader>gm', '<cmd>CodeDiff origin/HEAD...<CR>', { desc = '[G]it diff branch against [m]ain' })
 vim.keymap.set('n', '<leader>gh', '<cmd>CodeDiff history %<CR>', { desc = '[G]it [h]istory of current file' })
