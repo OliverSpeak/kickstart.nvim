@@ -20,14 +20,18 @@ require('codediff').setup {
   },
   explorer = {
     line_stats = { enabled = true }, -- +added -removed line counts beside each file
+    -- File list in a 15-line panel along the bottom rather than a 40-column sidebar, so
+    -- the diff gets the full width. Matches the history view's default
+    position = 'bottom',
   },
 }
 
--- Side by side needs about 80 columns a side plus the 40-column file list, which nvim
--- doesn't get beside Claude in cook's tmux split. When narrower, open diffs inline (one
--- pane, like GitHub's unified view). Checked on resize, so zooming the tmux pane
--- (prefix z) before opening a diff gets side by side. `t` in a diff toggles it
-local function codediff_layout() require('codediff.config').options.diff.layout = vim.o.columns >= 200 and 'side-by-side' or 'inline' end
+-- Side by side needs about 80 columns a side (the file list is along the bottom, so it
+-- takes no width), which nvim doesn't get beside Claude in cook's tmux split. When
+-- narrower, open diffs inline (one pane, like GitHub's unified view). Checked on resize,
+-- so zooming the tmux pane (prefix z) before opening a diff gets side by side. `t` in a
+-- diff toggles it
+local function codediff_layout() require('codediff.config').options.diff.layout = vim.o.columns >= 160 and 'side-by-side' or 'inline' end
 codediff_layout()
 vim.api.nvim_create_autocmd('VimResized', { callback = codediff_layout })
 
@@ -302,6 +306,25 @@ vim.api.nvim_create_autocmd('ColorScheme', { callback = popup_colours })
 
 vim.keymap.set('n', '<leader>gg', '<cmd>Neogit<CR>', { desc = '[G]it status (Neo[g]it)' })
 vim.keymap.set('n', '<leader>gc', '<cmd>Neogit commit<CR>', { desc = '[G]it [c]ommit' })
+
+-- Open the commit that last changed the cursor line in codediff, diffed against its parent:
+-- every file it touched, in the history view (like <leader>gh) narrowed to that one commit,
+-- so its subject, author and date show above the files. Codediff never shows the message
+-- body; <leader>hb does. The SHA comes from gitsigns' inline blame (current_line_blame in
+-- init.lua), which keeps it in a buffer variable for the cursor line. Uncommitted lines
+-- blame to an all-zero SHA, and a root commit has no parent to diff. The SHA is shortened
+-- because codediff prints the range in the history panel's title
+vim.keymap.set('n', '<leader>gb', function()
+  local blame = vim.b.gitsigns_blame_line_dict
+  if not blame then return vim.notify('No blame for this line yet', vim.log.levels.WARN) end
+  local sha = blame.sha:sub(1, 12)
+  if sha:match '^0+$' then return vim.notify('This line is not committed yet', vim.log.levels.WARN) end
+  local dir = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ':h')
+  if vim.system({ 'git', 'rev-parse', '--verify', '--quiet', sha .. '^' }, { cwd = dir }):wait().code ~= 0 then
+    return vim.notify(sha:sub(1, 7) .. ' is a root commit, with no parent to diff against', vim.log.levels.WARN)
+  end
+  vim.cmd(('CodeDiff history %s^..%s'):format(sha, sha))
+end, { desc = '[G]it [b]lame: diff commit for this line' })
 
 require('which-key').add {
   { '<leader>g', group = '[G]it', mode = { 'n', 'v' } },
